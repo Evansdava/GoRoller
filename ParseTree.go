@@ -37,10 +37,18 @@ func Create(data []string) *ParseTree {
 			// If number, set data in current node and move up a node
 		} else if strings.ContainsAny(char, "1234567890") {
 			tree.curNode.setData(char)
+			if tree.curNode.parent == nil {
+				tree.curNode.parent = &node{parent: nil, left: tree.curNode.parent, right: nil, data: ""}
+			}
 			tree.curNode = tree.curNode.parent
+			fmt.Println("Up")
 			// If right paren, move up a node
 		} else if char == ")" {
+			if tree.curNode.parent == nil {
+				tree.curNode.parent = &node{parent: nil, left: tree.curNode.parent, right: nil, data: ""}
+			}
 			tree.curNode = tree.curNode.parent
+			fmt.Println("Up")
 		}
 	}
 

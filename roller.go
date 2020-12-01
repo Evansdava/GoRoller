@@ -25,7 +25,7 @@ func main() {
 
 func parse(argString string) []string {
 	terms := make([]string, 0)
-	terms = append(terms, "(")
+	// terms = append(terms, "(")
 
 	num := ""
 	for i := 0; i < len(argString); i++ {
@@ -44,7 +44,7 @@ func parse(argString string) []string {
 		terms = append(terms, num)
 	}
 
-	terms = append(terms, ")")
+	// terms = append(terms, ")")
 
 	return terms
 }
