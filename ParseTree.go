@@ -24,35 +24,93 @@ func Create(data []string) *ParseTree {
 
 	for _, char := range data {
 		fmt.Println(char)
-
+		fmt.Println(tree.curNode)
 		// If left paren, create new left node
 		if char == "(" {
 			tree.curNode.insertLeft("")
 			tree.curNode = tree.curNode.left
 			// If operator, set data in current node and create new right one
 		} else if strings.Contains("+-*/d^", char) {
+			for tree.curNode.data != "" {
+				tree.curNode = tree.curNode.setParent("")
+			}
 			tree.curNode.setData(char)
 			tree.curNode.insertRight("")
 			tree.curNode = tree.curNode.right
 			// If number, set data in current node and move up a node
 		} else if strings.ContainsAny(char, "1234567890") {
 			tree.curNode.setData(char)
-			if tree.curNode.parent == nil {
-				tree.curNode.parent = &node{parent: nil, left: tree.curNode.parent, right: nil, data: ""}
-			}
-			tree.curNode = tree.curNode.parent
+			tree.curNode = tree.curNode.setParent("")
 			fmt.Println("Up")
 			// If right paren, move up a node
 		} else if char == ")" {
-			if tree.curNode.parent == nil {
-				tree.curNode.parent = &node{parent: nil, left: tree.curNode.parent, right: nil, data: ""}
-			}
-			tree.curNode = tree.curNode.parent
+			tree.curNode = tree.curNode.setParent("")
 			fmt.Println("Up")
 		}
 	}
 
+	for tree.curNode.parent != nil {
+		tree.curNode = tree.curNode.parent
+	}
+	tree.root = tree.curNode
+
 	return tree
+}
+
+func (tree *ParseTree) String() string {
+	layer := make([]*node, 1)
+	nextLayer := make([]*node, 0)
+
+	layer[0] = tree.root
+
+	output := ""
+
+	for len(layer) != 0 {
+		for _, n := range layer {
+			fmt.Println(layer)
+			if n != nil {
+				output += n.String()
+				nextLayer = append(nextLayer, n.left, n.right)
+			} else {
+				output += " nil "
+			}
+		}
+		output += "\n"
+		layer = nextLayer
+		nextLayer = nil
+	}
+
+	return output
+}
+
+func (n *node) String() string {
+	var output string
+	if n.left != nil {
+		output += " /"
+	} else {
+		output += "  "
+	}
+	if n.data != "" {
+		output += n.data
+	} else {
+		output += "_"
+	}
+	if n.right != nil {
+		output += "\\ "
+	} else {
+		output += "  "
+	}
+
+	return output
+}
+
+// Return the node's parent, or make a new one if needed
+func (curNode *node) setParent(d string) *node {
+	fmt.Println("Up")
+	if curNode.parent == nil {
+		curNode.parent = &node{parent: nil, left: curNode, right: nil, data: ""}
+	}
+	return curNode.parent
 }
 
 // Insert a new node to the left
