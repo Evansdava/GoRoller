@@ -24,7 +24,6 @@ func main() {
 
 	// fmt.Println(args)
 	// (10d6+2d8)^2+(1d20-6d4)*12/2d4
-	// (10d6+2d8)^2+(1d20-6d4)*12/2d4
 
 	argString := strings.ToLower(strings.Join(args, ""))
 	argString = "((((10d6)+(2d8))^2)+((((1d20)-(6d4))*12)/(2d4)))"
@@ -32,9 +31,11 @@ func main() {
 	termSlice := parse(argString)
 	fmt.Println(termSlice)
 
-	tree := Create(termSlice)
-	fmt.Println(tree.String())
-	fmt.Println(eval(tree.root, m))
+	postfix := CreatePostfix(termSlice)
+	fmt.Println(evalPostfix(postfix, m))
+	// tree := Create(termSlice)
+	// fmt.Println(tree.String())
+	// fmt.Println(evalTree(tree.root, m))
 }
 
 func parse(argString string) []string {
@@ -63,7 +64,35 @@ func parse(argString string) []string {
 	return terms
 }
 
-func eval(curNode *node, m map[string]func(string, string) string) string {
+func evalPostfix(postfix *Postfix, m map[string]func(string, string) string) []string {
+	outStack := []string{}
+	var leftNum, rightNum string
+	for len(postfix.data) > 0 {
+		// fmt.Println(postfix.data)
+		// fmt.Println(outStack)
+		token := postfix.data[0]
+		if strings.ContainsAny(token, "1234567890") {
+			outStack = append(outStack, token)
+		} else if strings.Contains("+-*/d^", token) {
+			fn := m[token]
+			if postfix.assoc[token] == "l" {
+				outStack, leftNum = Pop(outStack)
+				outStack, rightNum = Pop(outStack)
+			} else if postfix.assoc[token] == "r" {
+				outStack, rightNum = Pop(outStack)
+				outStack, leftNum = Pop(outStack)
+			}
+			outStack = append(outStack, fn(leftNum, rightNum))
+		}
+		postfix.data[0] = ""
+		if len(postfix.data) > 0 {
+			postfix.data = postfix.data[1:]
+		}
+	}
+	return outStack
+}
+
+func evalTree(curNode *node, m map[string]func(string, string) string) string {
 	// fmt.Println("Current", curNode)
 	// fmt.Println(curNode.left, curNode.right)
 	if curNode.left == nil && curNode.right == nil {
@@ -75,20 +104,20 @@ func eval(curNode *node, m map[string]func(string, string) string) string {
 	if curNode.left == nil {
 		// fmt.Println("No left")
 		// fmt.Println("Right", curNode.right)
-		result := fn("", eval(curNode.right, m))
+		result := fn("", evalTree(curNode.right, m))
 		// fmt.Println(result)
 		return result
 	} else if curNode.right == nil {
 		// fmt.Println("No right")
 		// fmt.Println("Left", curNode.left)
-		result := fn(eval(curNode.left, m), "")
+		result := fn(evalTree(curNode.left, m), "")
 		// fmt.Println(result)
 		return result
 	} else {
 		// fmt.Println("Both")
 		// fmt.Println("Left", curNode.left)
 		// fmt.Println("Right", curNode.right)
-		result := fn(eval(curNode.left, m), eval(curNode.right, m))
+		result := fn(evalTree(curNode.left, m), evalTree(curNode.right, m))
 		// fmt.Println(result)
 		return result
 	}
@@ -165,7 +194,7 @@ func power(leftNum string, rightNum string) string {
 	left, _ := strconv.ParseFloat(leftNum, 64)
 	right, _ := strconv.ParseFloat(rightNum, 64)
 	result := string(strconv.FormatFloat(math.Pow(left, right), 'g', -1, 64))
-	// fmt.Println(result)
+	fmt.Println(left, right, result)
 	return result
 }
 
