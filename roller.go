@@ -26,16 +26,13 @@ func main() {
 	// (10d6+2d8)^2+(1d20-6d4)*12/2d4
 
 	argString := strings.ToLower(strings.Join(args, ""))
-	argString = "(10d6+2d8)^2+(1d20-6d4)*12/2d4"
+	// argString = "(10d6+2d8)^2+(1d20-6d4)*12/2d4"
 	fmt.Println(argString)
 	termSlice := parse(argString)
 	fmt.Println(termSlice)
 
 	postfix := CreatePostfix(termSlice)
 	fmt.Println(evalPostfix(postfix, m))
-	// tree := Create(termSlice)
-	// fmt.Println(tree.String())
-	// fmt.Println(evalTree(tree.root, m))
 }
 
 func parse(argString string) []string {
@@ -75,13 +72,9 @@ func evalPostfix(postfix *Postfix, m map[string]func(string, string) string) []s
 			outStack = append(outStack, token)
 		} else if strings.Contains("+-*/d^", token) {
 			fn := m[token]
-			if postfix.assoc[token] == "l" {
-				outStack, leftNum = Pop(outStack)
-				outStack, rightNum = Pop(outStack)
-			} else if postfix.assoc[token] == "r" {
-				outStack, rightNum = Pop(outStack)
-				outStack, leftNum = Pop(outStack)
-			}
+			outStack, rightNum = Pop(outStack)
+			outStack, leftNum = Pop(outStack)
+			// fmt.Println(leftNum, rightNum)
 			outStack = append(outStack, fn(leftNum, rightNum))
 		}
 		postfix.data[0] = ""
@@ -194,7 +187,7 @@ func power(leftNum string, rightNum string) string {
 	left, _ := strconv.ParseFloat(leftNum, 64)
 	right, _ := strconv.ParseFloat(rightNum, 64)
 	result := string(strconv.FormatFloat(math.Pow(left, right), 'g', -1, 64))
-	fmt.Println(left, right, result)
+	// fmt.Println(left, right, result)
 	return result
 }
 
@@ -229,7 +222,7 @@ func strRoll(leftNum string, rightNum string) string {
 	strRolls = strRolls[:lastIndex] + "=" + strRolls[lastIndex+1:]
 
 	// result := strings.Join(strRolls[0:len(rolls)-1], "+")
-	// fmt.Println(result)
+	// fmt.Println(strRolls)
 	return strRolls[lastIndex+1:]
 }
 

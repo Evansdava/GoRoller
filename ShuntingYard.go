@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"strings"
 )
 
@@ -38,11 +37,9 @@ func CreatePostfix(data []string) *Postfix {
 	outQueue := []string{}
 
 	var op string
-	fmt.Println(op)
+	// fmt.Println(op)
 
 	for _, char := range data {
-		fmt.Println(char)
-		fmt.Println(opStack)
 		if strings.ContainsAny(char, "1234567890") {
 			outQueue = append(outQueue, char)
 		} else if strings.Contains("+-*/d^", char) {
@@ -52,7 +49,6 @@ func CreatePostfix(data []string) *Postfix {
 						(prec[opStack[len(opStack)-1]] == prec[char] &&
 							assoc[char] == "l")) &&
 					opStack[len(opStack)-1] != "(" {
-					// fmt.Println(outQueue)
 					opStack, op = Pop(opStack)
 					outQueue = append(outQueue, op)
 				}
