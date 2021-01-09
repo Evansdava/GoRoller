@@ -14,6 +14,7 @@ func main() {
 	args := os.Args[1:]
 
 	m := make(map[string]func(string, string) string)
+	m[""] = add
 	m["+"] = add
 	m["-"] = subtract
 	m["*"] = multiply
@@ -21,17 +22,19 @@ func main() {
 	m["^"] = power
 	m["d"] = strRoll
 
-	fmt.Println(args)
+	// fmt.Println(args)
+	// (10d6+2d8)^2+(1d20-6d4)*12/2d4
 	// (10d6+2d8)^2+(1d20-6d4)*12/2d4
 
 	argString := strings.ToLower(strings.Join(args, ""))
+	argString = "((((10d6)+(2d8))^2)+((((1d20)-(6d4))*12)/(2d4)))"
 	fmt.Println(argString)
 	termSlice := parse(argString)
 	fmt.Println(termSlice)
 
 	tree := Create(termSlice)
-	fmt.Println(eval(tree.root, m))
 	fmt.Println(tree.String())
+	fmt.Println(eval(tree.root, m))
 }
 
 func parse(argString string) []string {
@@ -61,30 +64,38 @@ func parse(argString string) []string {
 }
 
 func eval(curNode *node, m map[string]func(string, string) string) string {
-	fmt.Println("Current", curNode)
+	// fmt.Println("Current", curNode)
+	// fmt.Println(curNode.left, curNode.right)
 	if curNode.left == nil && curNode.right == nil {
-		fmt.Println("Neither")
+		// fmt.Println("Neither")
+		// fmt.Println(curNode.data)
 		return curNode.data
+	}
+	fn := m[curNode.data]
+	if curNode.left == nil {
+		// fmt.Println("No left")
+		// fmt.Println("Right", curNode.right)
+		result := fn("", eval(curNode.right, m))
+		// fmt.Println(result)
+		return result
+	} else if curNode.right == nil {
+		// fmt.Println("No right")
+		// fmt.Println("Left", curNode.left)
+		result := fn(eval(curNode.left, m), "")
+		// fmt.Println(result)
+		return result
 	} else {
-		fn := m[curNode.data]
-		if curNode.left == nil {
-			fmt.Println("No left")
-			fmt.Println("Right", curNode.right)
-			return fn("", eval(curNode.right, m))
-		} else if curNode.right == nil {
-			fmt.Println("No right")
-			fmt.Println("Left", curNode.left)
-			return fn(eval(curNode.left, m), "")
-		} else {
-			fmt.Println("Both")
-			fmt.Println("Left", curNode.left)
-			fmt.Println("Right", curNode.right)
-			return fn(eval(curNode.left, m), eval(curNode.right, m))
-		}
+		// fmt.Println("Both")
+		// fmt.Println("Left", curNode.left)
+		// fmt.Println("Right", curNode.right)
+		result := fn(eval(curNode.left, m), eval(curNode.right, m))
+		// fmt.Println(result)
+		return result
 	}
 }
 
 func add(leftNum string, rightNum string) string {
+	// fmt.Print("add: ")
 	if leftNum == "" {
 		leftNum = "0"
 	}
@@ -93,10 +104,13 @@ func add(leftNum string, rightNum string) string {
 	}
 	left, _ := strconv.ParseFloat(leftNum, 64)
 	right, _ := strconv.ParseFloat(rightNum, 64)
-	return string(strconv.FormatFloat(left+right, 'g', -1, 64))
+	result := string(strconv.FormatFloat(left+right, 'g', -1, 64))
+	// fmt.Println(result)
+	return result
 }
 
 func subtract(leftNum string, rightNum string) string {
+	// fmt.Print("subtract: ")
 	if leftNum == "" {
 		leftNum = "0"
 	}
@@ -105,37 +119,71 @@ func subtract(leftNum string, rightNum string) string {
 	}
 	left, _ := strconv.ParseFloat(leftNum, 64)
 	right, _ := strconv.ParseFloat(rightNum, 64)
-	return string(strconv.FormatFloat(left-right, 'g', -1, 64))
+	result := string(strconv.FormatFloat(left-right, 'g', -1, 64))
+	// fmt.Println(result)
+	return result
 }
 
 func multiply(leftNum string, rightNum string) string {
+	// fmt.Print("multiply: ")
+	if leftNum == "" {
+		leftNum = "1"
+	}
+	if rightNum == "" {
+		rightNum = "1"
+	}
 	left, _ := strconv.ParseFloat(leftNum, 64)
 	right, _ := strconv.ParseFloat(rightNum, 64)
-	return string(strconv.FormatFloat(left*right, 'g', -1, 64))
+	result := string(strconv.FormatFloat(left*right, 'g', -1, 64))
+	// fmt.Println(result)
+	return result
 }
 
 func divide(leftNum string, rightNum string) string {
+	// fmt.Print("divide: ")
+	if leftNum == "" {
+		leftNum = "1"
+	}
+	if rightNum == "" {
+		rightNum = "1"
+	}
 	left, _ := strconv.ParseFloat(leftNum, 64)
 	right, _ := strconv.ParseFloat(rightNum, 64)
-	return string(strconv.FormatFloat(left/right, 'g', -1, 64))
+	result := string(strconv.FormatFloat(left/right, 'g', -1, 64))
+	// fmt.Println(result)
+	return result
 }
 
 func power(leftNum string, rightNum string) string {
+	// fmt.Print("power: ")
+	if leftNum == "" {
+		leftNum = "1"
+	}
+	if rightNum == "" {
+		rightNum = "1"
+	}
 	left, _ := strconv.ParseFloat(leftNum, 64)
 	right, _ := strconv.ParseFloat(rightNum, 64)
-	return string(strconv.FormatFloat(math.Pow(left, right), 'g', -1, 64))
+	result := string(strconv.FormatFloat(math.Pow(left, right), 'g', -1, 64))
+	// fmt.Println(result)
+	return result
 }
 
 func addDice(dieString string) string {
+	// fmt.Print("addDice: ")
 	var total int
 	for _, die := range dieString {
 		dieInt, _ := strconv.Atoi(string(die))
 		total += dieInt
 	}
-	return strconv.Itoa(total)
+	result := strconv.Itoa(total)
+	// fmt.Println(result)
+	return result
 }
 
 func strRoll(leftNum string, rightNum string) string {
+	// fmt.Print("strRoll: ")
+	// fmt.Println(leftNum, rightNum)
 	if leftNum == "" {
 		leftNum = "1"
 	}
@@ -146,16 +194,21 @@ func strRoll(leftNum string, rightNum string) string {
 	right, _ := strconv.Atoi(rightNum)
 	rolls := dieRoll(left, right)
 
-	strRolls := make([]string, len(rolls))
+	strRolls := strings.Trim(strings.Join(strings.Fields(fmt.Sprint(rolls)), "+"), "[]")
+	lastIndex := strings.LastIndex(strRolls, "+")
+	// fmt.Println(strRolls)
+	strRolls = strRolls[:lastIndex] + "=" + strRolls[lastIndex+1:]
 
-	return strings.Join(strRolls[0:len(strRolls)-1], "+")
+	// result := strings.Join(strRolls[0:len(rolls)-1], "+")
+	// fmt.Println(result)
+	return strRolls[lastIndex+1:]
 }
 
 func dieRoll(numDice, dieSize int) []int {
 	if numDice < 0 {
 		numDice = -numDice
 	}
-	fmt.Println("Dice:", numDice, dieSize)
+	// fmt.Println("Dice:", numDice, dieSize)
 	s1 := rand.NewSource(time.Now().UnixNano())
 	r1 := rand.New(s1)
 
