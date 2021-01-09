@@ -41,18 +41,21 @@ func CreatePostfix(data []string) *Postfix {
 	fmt.Println(op)
 
 	for _, char := range data {
-		// fmt.Println(char)
+		fmt.Println(char)
+		fmt.Println(opStack)
 		if strings.ContainsAny(char, "1234567890") {
 			outQueue = append(outQueue, char)
 		} else if strings.Contains("+-*/d^", char) {
-			for strings.Contains("+-*/d^", opStack[len(opStack)-1]) &&
-				(prec[opStack[len(opStack)-1]] > prec[char] ||
-					(prec[opStack[len(opStack)-1]] == prec[char] &&
-						assoc[char] == "l")) &&
-				opStack[len(opStack)-1] != "(" {
-				// fmt.Println(outQueue)
-				opStack, op = Pop(opStack)
-				outQueue = append(outQueue, op)
+			if len(opStack) > 0 {
+				for strings.Contains("+-*/d^", opStack[len(opStack)-1]) &&
+					(prec[opStack[len(opStack)-1]] > prec[char] ||
+						(prec[opStack[len(opStack)-1]] == prec[char] &&
+							assoc[char] == "l")) &&
+					opStack[len(opStack)-1] != "(" {
+					// fmt.Println(outQueue)
+					opStack, op = Pop(opStack)
+					outQueue = append(outQueue, op)
+				}
 			}
 			opStack = append(opStack, char)
 		} else if char == "(" {

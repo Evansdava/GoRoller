@@ -26,7 +26,7 @@ func main() {
 	// (10d6+2d8)^2+(1d20-6d4)*12/2d4
 
 	argString := strings.ToLower(strings.Join(args, ""))
-	argString = "((((10d6)+(2d8))^2)+((((1d20)-(6d4))*12)/(2d4)))"
+	argString = "(10d6+2d8)^2+(1d20-6d4)*12/2d4"
 	fmt.Println(argString)
 	termSlice := parse(argString)
 	fmt.Println(termSlice)
@@ -40,7 +40,7 @@ func main() {
 
 func parse(argString string) []string {
 	terms := make([]string, 0)
-	// terms = append(terms, "(")
+	terms = append(terms, "(")
 
 	num := ""
 	for i := 0; i < len(argString); i++ {
@@ -59,7 +59,7 @@ func parse(argString string) []string {
 		terms = append(terms, num)
 	}
 
-	// terms = append(terms, ")")
+	terms = append(terms, ")")
 
 	return terms
 }
