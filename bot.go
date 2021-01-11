@@ -59,7 +59,7 @@ func StartBot() {
 func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	// Ignore all messages created by the bot itself
-	// This isn't required in this specific example but it's a good practice.
+	// This isn't required in this specific case but it's a good practice.
 	if m.Author.ID == s.State.User.ID {
 		return
 	}
@@ -71,12 +71,4 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 		s.ChannelMessageSend(m.ChannelID, outputString)
 	}
-	// if m.Content == "ping" {
-	// 	s.ChannelMessageSend(m.ChannelID, m.Author.Mention()+" Pong!")
-	// }
-
-	// // If the message is "pong" reply with "Ping!"
-	// if m.Content == "pong" {
-	// 	s.ChannelMessageSend(m.ChannelID, "Ping!")
-	// }
 }

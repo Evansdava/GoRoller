@@ -60,7 +60,7 @@ func GetRoll(argString string) string {
 
 	// Prepare to evaluate the terms
 	postfix := CreatePostfix(termSlice)
-	resultString := argString
+	resultString := strings.Join(termSlice[1:len(termSlice)-1], "")
 
 	// Keep an eye out for die rolls
 	rollPattern, err := regexp.Compile("\\d*d\\d+")
@@ -80,8 +80,13 @@ func GetRoll(argString string) string {
 	for rollPattern.MatchString(resultString) {
 	}
 
+	resultString = strings.ReplaceAll(resultString, "*", "\\*")
+
 	// Return the results
-	return resultString + " = " + resultSlice[0]
+	if len(resultSlice) > 0 {
+		return resultString + " = " + resultSlice[0]
+	}
+	return resultString
 }
 
 func parse(argString string) []string {
@@ -91,24 +96,37 @@ func parse(argString string) []string {
 	num := ""
 	for i := 0; i < len(argString); i++ {
 		str := string(argString[i])
+		// fmt.Println(str, i, len(argString))
 		if _, err := strconv.Atoi(str); err == nil {
 			num += str
-		} else if num != "" {
+		} else if num != "" && strings.Contains("+-*/^d()", str) {
 			terms = append(terms, num)
 			terms = append(terms, str)
 			num = ""
-		} else {
-			if str == "d" {
+		} else if strings.Contains("+-*/^d()", str) {
+			if str == "d" && !strings.Contains(")", terms[len(terms)-1]) {
+				// fmt.Println("Inserting 1 before operator")
 				terms = append(terms, "1")
+			} else if !strings.Contains(")", terms[len(terms)-1]) && !strings.Contains("()", str) {
+				// fmt.Println("Inserting 0 before operator")
+				terms = append(terms, "0")
 			}
 			terms = append(terms, str)
+			if i == len(argString)-1 {
+				// fmt.Println("Inserting 0 after operator")
+				terms = append(terms, "0")
+			}
 		}
 	}
 	if num != "" {
 		terms = append(terms, num)
 	}
+	if strings.Contains("+-*/d^", terms[len(terms)-1]) {
+		terms = append(terms, "0")
+	}
 
 	terms = append(terms, ")")
+	fmt.Println(terms)
 
 	return terms
 }
@@ -245,8 +263,11 @@ func strRoll(leftNum, rightNum string, outPut chan string) string {
 	strRolls := strings.Trim(strings.Join(strings.Fields(fmt.Sprint(rolls)), "+"), "[]")
 	lastIndex := strings.LastIndex(strRolls, "+")
 	// fmt.Println(strRolls)
+	if len(strRolls) == 1 {
+		outPut <- "(" + strRolls + ")"
+		return strRolls
+	}
 	strRolls = strRolls[:lastIndex] + "=" + strRolls[lastIndex+1:]
-
 	// result := strings.Join(strRolls[0:len(rolls)-1], "+")
 	// fmt.Println(strRolls[:lastIndex])
 
@@ -256,8 +277,11 @@ func strRoll(leftNum, rightNum string, outPut chan string) string {
 }
 
 func dieRoll(numDice, dieSize int) []int {
-	if numDice < 0 {
-		numDice = -numDice
+	if numDice == 0 {
+		return make([]int, 1)
+	}
+	if dieSize == 0 {
+		return make([]int, numDice+1)
 	}
 	// fmt.Println("Dice:", numDice, dieSize)
 	s1 := rand.NewSource(time.Now().UnixNano())
