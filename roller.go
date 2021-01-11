@@ -5,6 +5,7 @@ import (
 	"math"
 	"math/rand"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -13,7 +14,34 @@ import (
 func main() {
 	args := os.Args[1:]
 
-	m := make(map[string]func(string, string) string)
+	// m := make(map[string]func(string, string) string)
+	// m[""] = add
+	// m["+"] = add
+	// m["-"] = subtract
+	// m["*"] = multiply
+	// m["/"] = divide
+	// m["^"] = power
+	// m["d"] = strRoll
+
+	// fmt.Println(args)
+	// (10d6+2d8)^2+(1d20-6d4)*12/2d4
+
+	argString := strings.ToLower(strings.Join(args, ""))
+	fmt.Println(GetRoll(argString))
+	// // argString = "(10d6+2d8)^2+(1d20-6d4)*12/2d4"
+	// fmt.Println(argString)
+	// termSlice := parse(argString)
+	// fmt.Println(termSlice)
+
+	// postfix := CreatePostfix(termSlice)
+	// fmt.Println(evalPostfix(postfix, m))
+
+	// StartBot()
+}
+
+// GetRoll parses the passed string and returns the result of the roll
+func GetRoll(argString string) string {
+	m := make(map[string]func(string, string, chan string) string)
 	m[""] = add
 	m["+"] = add
 	m["-"] = subtract
@@ -22,17 +50,39 @@ func main() {
 	m["^"] = power
 	m["d"] = strRoll
 
-	// fmt.Println(args)
-	// (10d6+2d8)^2+(1d20-6d4)*12/2d4
+	// Format the input string, removing spaces and lowering case
+	argString = strings.Replace(strings.ToLower(argString), " ", "", -1)
 
-	argString := strings.ToLower(strings.Join(args, ""))
-	// argString = "(10d6+2d8)^2+(1d20-6d4)*12/2d4"
-	fmt.Println(argString)
+	// Use argString to create terms
 	termSlice := parse(argString)
-	fmt.Println(termSlice)
 
+	// Create a channel with a buffer as long as the term slice
+	outPut := make(chan string)
+
+	// Prepare to evaluate the terms
 	postfix := CreatePostfix(termSlice)
-	fmt.Println(evalPostfix(postfix, m))
+	resultString := argString
+
+	// Keep an eye out for die rolls
+	rollPattern, err := regexp.Compile("\\d*d\\d+")
+	checkErr(err)
+
+	// GoRoutine to put roll results into the output string
+	go func() {
+		for str := range outPut {
+			resultString = strings.Replace(resultString, rollPattern.FindString(resultString), str, 1)
+		}
+	}()
+
+	// Evaluate the terms
+	resultSlice := evalPostfix(postfix, m, outPut)
+
+	// Force the program to wait until every instance of "d[number]" is replaced
+	for rollPattern.MatchString(resultString) {
+	}
+
+	// Return the results
+	return resultString + " = " + resultSlice[0]
 }
 
 func parse(argString string) []string {
@@ -49,6 +99,9 @@ func parse(argString string) []string {
 			terms = append(terms, str)
 			num = ""
 		} else {
+			if str == "d" {
+				terms = append(terms, "1")
+			}
 			terms = append(terms, str)
 		}
 	}
@@ -61,7 +114,7 @@ func parse(argString string) []string {
 	return terms
 }
 
-func evalPostfix(postfix *Postfix, m map[string]func(string, string) string) []string {
+func evalPostfix(postfix *Postfix, m map[string]func(string, string, chan string) string, outPut chan string) []string {
 	outStack := []string{}
 	var leftNum, rightNum string
 	for len(postfix.data) > 0 {
@@ -75,7 +128,7 @@ func evalPostfix(postfix *Postfix, m map[string]func(string, string) string) []s
 			outStack, rightNum = Pop(outStack)
 			outStack, leftNum = Pop(outStack)
 			// fmt.Println(leftNum, rightNum)
-			outStack = append(outStack, fn(leftNum, rightNum))
+			outStack = append(outStack, fn(leftNum, rightNum, outPut))
 		}
 		postfix.data[0] = ""
 		if len(postfix.data) > 0 {
@@ -85,38 +138,7 @@ func evalPostfix(postfix *Postfix, m map[string]func(string, string) string) []s
 	return outStack
 }
 
-func evalTree(curNode *node, m map[string]func(string, string) string) string {
-	// fmt.Println("Current", curNode)
-	// fmt.Println(curNode.left, curNode.right)
-	if curNode.left == nil && curNode.right == nil {
-		// fmt.Println("Neither")
-		// fmt.Println(curNode.data)
-		return curNode.data
-	}
-	fn := m[curNode.data]
-	if curNode.left == nil {
-		// fmt.Println("No left")
-		// fmt.Println("Right", curNode.right)
-		result := fn("", evalTree(curNode.right, m))
-		// fmt.Println(result)
-		return result
-	} else if curNode.right == nil {
-		// fmt.Println("No right")
-		// fmt.Println("Left", curNode.left)
-		result := fn(evalTree(curNode.left, m), "")
-		// fmt.Println(result)
-		return result
-	} else {
-		// fmt.Println("Both")
-		// fmt.Println("Left", curNode.left)
-		// fmt.Println("Right", curNode.right)
-		result := fn(evalTree(curNode.left, m), evalTree(curNode.right, m))
-		// fmt.Println(result)
-		return result
-	}
-}
-
-func add(leftNum string, rightNum string) string {
+func add(leftNum, rightNum string, outPut chan string) string {
 	// fmt.Print("add: ")
 	if leftNum == "" {
 		leftNum = "0"
@@ -128,10 +150,11 @@ func add(leftNum string, rightNum string) string {
 	right, _ := strconv.ParseFloat(rightNum, 64)
 	result := string(strconv.FormatFloat(left+right, 'g', -1, 64))
 	// fmt.Println(result)
+	// c <- "+" + rightNum
 	return result
 }
 
-func subtract(leftNum string, rightNum string) string {
+func subtract(leftNum, rightNum string, outPut chan string) string {
 	// fmt.Print("subtract: ")
 	if leftNum == "" {
 		leftNum = "0"
@@ -143,10 +166,11 @@ func subtract(leftNum string, rightNum string) string {
 	right, _ := strconv.ParseFloat(rightNum, 64)
 	result := string(strconv.FormatFloat(left-right, 'g', -1, 64))
 	// fmt.Println(result)
+	// c <- "-" + rightNum
 	return result
 }
 
-func multiply(leftNum string, rightNum string) string {
+func multiply(leftNum, rightNum string, outPut chan string) string {
 	// fmt.Print("multiply: ")
 	if leftNum == "" {
 		leftNum = "1"
@@ -158,10 +182,11 @@ func multiply(leftNum string, rightNum string) string {
 	right, _ := strconv.ParseFloat(rightNum, 64)
 	result := string(strconv.FormatFloat(left*right, 'g', -1, 64))
 	// fmt.Println(result)
+	// c <- "*" + rightNum
 	return result
 }
 
-func divide(leftNum string, rightNum string) string {
+func divide(leftNum, rightNum string, outPut chan string) string {
 	// fmt.Print("divide: ")
 	if leftNum == "" {
 		leftNum = "1"
@@ -173,10 +198,11 @@ func divide(leftNum string, rightNum string) string {
 	right, _ := strconv.ParseFloat(rightNum, 64)
 	result := string(strconv.FormatFloat(left/right, 'g', -1, 64))
 	// fmt.Println(result)
+	// c <- "/" + rightNum
 	return result
 }
 
-func power(leftNum string, rightNum string) string {
+func power(leftNum, rightNum string, outPut chan string) string {
 	// fmt.Print("power: ")
 	if leftNum == "" {
 		leftNum = "1"
@@ -188,6 +214,7 @@ func power(leftNum string, rightNum string) string {
 	right, _ := strconv.ParseFloat(rightNum, 64)
 	result := string(strconv.FormatFloat(math.Pow(left, right), 'g', -1, 64))
 	// fmt.Println(left, right, result)
+	// c <- "^" + rightNum
 	return result
 }
 
@@ -203,7 +230,7 @@ func addDice(dieString string) string {
 	return result
 }
 
-func strRoll(leftNum string, rightNum string) string {
+func strRoll(leftNum, rightNum string, outPut chan string) string {
 	// fmt.Print("strRoll: ")
 	// fmt.Println(leftNum, rightNum)
 	if leftNum == "" {
@@ -222,7 +249,10 @@ func strRoll(leftNum string, rightNum string) string {
 	strRolls = strRolls[:lastIndex] + "=" + strRolls[lastIndex+1:]
 
 	// result := strings.Join(strRolls[0:len(rolls)-1], "+")
-	// fmt.Println(strRolls)
+	// fmt.Println(strRolls[:lastIndex])
+
+	// Add each roll to the output channel
+	outPut <- "(" + strRolls[:lastIndex] + ")"
 	return strRolls[lastIndex+1:]
 }
 
