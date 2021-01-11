@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	"github.com/bwmarrin/discordgo"
@@ -62,16 +63,20 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if m.Author.ID == s.State.User.ID {
 		return
 	}
-	// If the message is "ping" reply with "Pong!"
-	// if strings.HasPrefix(m.Content, "/r") {
+	// If the message starts with '/r', roll the dice and return the result
+	if strings.HasPrefix(m.Content, "/r ") {
+		trimCont := strings.Trim(strings.TrimPrefix(m.Content, "/r "), " ")
+		roll := GetRoll(trimCont)
+		outputString := m.Author.Mention() + ": `" + trimCont + "` = " + roll
 
+		s.ChannelMessageSend(m.ChannelID, outputString)
+	}
+	// if m.Content == "ping" {
+	// 	s.ChannelMessageSend(m.ChannelID, m.Author.Mention()+" Pong!")
 	// }
-	if m.Content == "ping" {
-		s.ChannelMessageSend(m.ChannelID, m.Author.Mention()+" Pong!")
-	}
 
-	// If the message is "pong" reply with "Ping!"
-	if m.Content == "pong" {
-		s.ChannelMessageSend(m.ChannelID, "Ping!")
-	}
+	// // If the message is "pong" reply with "Ping!"
+	// if m.Content == "pong" {
+	// 	s.ChannelMessageSend(m.ChannelID, "Ping!")
+	// }
 }

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
-	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -12,7 +11,7 @@ import (
 )
 
 func main() {
-	args := os.Args[1:]
+	// args := os.Args[1:]
 
 	// m := make(map[string]func(string, string) string)
 	// m[""] = add
@@ -26,8 +25,8 @@ func main() {
 	// fmt.Println(args)
 	// (10d6+2d8)^2+(1d20-6d4)*12/2d4
 
-	argString := strings.ToLower(strings.Join(args, ""))
-	fmt.Println(GetRoll(argString))
+	// argString := strings.ToLower(strings.Join(args, ""))
+	// fmt.Println(GetRoll(argString))
 	// // argString = "(10d6+2d8)^2+(1d20-6d4)*12/2d4"
 	// fmt.Println(argString)
 	// termSlice := parse(argString)
@@ -36,7 +35,7 @@ func main() {
 	// postfix := CreatePostfix(termSlice)
 	// fmt.Println(evalPostfix(postfix, m))
 
-	// StartBot()
+	StartBot()
 }
 
 // GetRoll parses the passed string and returns the result of the roll
