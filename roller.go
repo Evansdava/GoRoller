@@ -13,27 +13,12 @@ import (
 func main() {
 	// args := os.Args[1:]
 
-	// m := make(map[string]func(string, string) string)
-	// m[""] = add
-	// m["+"] = add
-	// m["-"] = subtract
-	// m["*"] = multiply
-	// m["/"] = divide
-	// m["^"] = power
-	// m["d"] = strRoll
-
 	// fmt.Println(args)
 	// (10d6+2d8)^2+(1d20-6d4)*12/2d4
 
+	// // argString = "(10d6+2d8)^2+(1d20-6d4)*12/2d4"
 	// argString := strings.ToLower(strings.Join(args, ""))
 	// fmt.Println(GetRoll(argString))
-	// // argString = "(10d6+2d8)^2+(1d20-6d4)*12/2d4"
-	// fmt.Println(argString)
-	// termSlice := parse(argString)
-	// fmt.Println(termSlice)
-
-	// postfix := CreatePostfix(termSlice)
-	// fmt.Println(evalPostfix(postfix, m))
 
 	StartBot()
 }
@@ -48,6 +33,12 @@ func GetRoll(argString string) string {
 	m["/"] = divide
 	m["^"] = power
 	m["d"] = strRoll
+	// m["k"] = keepHigh
+	// m["kh"] = keepHigh
+	// m["kl"] = keepLow
+	// m["dh"] = dropHigh
+	// m["dl"] = dropLow
+	// m["d"] = dropLow
 
 	// Format the input string, removing spaces and lowering case
 	argString = strings.Replace(strings.ToLower(argString), " ", "", -1)
@@ -57,6 +48,7 @@ func GetRoll(argString string) string {
 
 	// Create a channel with a buffer as long as the term slice
 	outPut := make(chan string)
+	dieRolls := make(chan string, len(termSlice))
 
 	// Prepare to evaluate the terms
 	postfix := CreatePostfix(termSlice)
@@ -74,7 +66,7 @@ func GetRoll(argString string) string {
 	}()
 
 	// Evaluate the terms
-	resultSlice := evalPostfix(postfix, m, outPut)
+	resultSlice := evalPostfix(postfix, m, outPut, dieRolls)
 
 	// Force the program to wait until every instance of "d[number]" is replaced
 	for rollPattern.MatchString(resultString) {
@@ -116,7 +108,17 @@ func parse(argString string) []string {
 				// fmt.Println("Inserting 0 after operator")
 				terms = append(terms, "0")
 			}
-		}
+		} // else if strings.Contains("kd", str) {
+		// 	if i < len(argString)-1 {
+		// 		if strings.Contains("hl", string(argString[i+1])) {
+		// 			terms = append(terms, str+string(argString[i+1]))
+		// 		} else {
+		// 			terms = append(terms, str)
+		// 		}
+		// 	} else {
+		// 		terms = append(terms, str)
+		// 	}
+		// }
 	}
 	if num != "" {
 		terms = append(terms, num)
@@ -131,7 +133,7 @@ func parse(argString string) []string {
 	return terms
 }
 
-func evalPostfix(postfix *Postfix, m map[string]func(string, string, chan string) string, outPut chan string) []string {
+func evalPostfix(postfix *Postfix, m map[string]func(string, string, chan string) string, outPut, dieRolls chan string) []string {
 	outStack := []string{}
 	var leftNum, rightNum string
 	for len(postfix.data) > 0 {
@@ -235,19 +237,7 @@ func power(leftNum, rightNum string, outPut chan string) string {
 	return result
 }
 
-func addDice(dieString string) string {
-	// fmt.Print("addDice: ")
-	var total int
-	for _, die := range dieString {
-		dieInt, _ := strconv.Atoi(string(die))
-		total += dieInt
-	}
-	result := strconv.Itoa(total)
-	// fmt.Println(result)
-	return result
-}
-
-func strRoll(leftNum, rightNum string, outPut chan string) string {
+func strRoll(leftNum, rightNum string, dieRolls chan string) string {
 	// fmt.Print("strRoll: ")
 	// fmt.Println(leftNum, rightNum)
 	if leftNum == "" {
@@ -264,7 +254,7 @@ func strRoll(leftNum, rightNum string, outPut chan string) string {
 	lastIndex := strings.LastIndex(strRolls, "+")
 	// fmt.Println(strRolls)
 	if len(strRolls) == 1 {
-		outPut <- "(" + strRolls + ")"
+		dieRolls <- strRolls
 		return strRolls
 	}
 	strRolls = strRolls[:lastIndex] + "=" + strRolls[lastIndex+1:]
@@ -272,9 +262,25 @@ func strRoll(leftNum, rightNum string, outPut chan string) string {
 	// fmt.Println(strRolls[:lastIndex])
 
 	// Add each roll to the output channel
-	outPut <- "(" + strRolls[:lastIndex] + ")"
+	dieRolls <- "(" + strRolls[:lastIndex] + ")"
 	return strRolls[lastIndex+1:]
 }
+
+// func keepHigh(leftNum, rightNum string, dieRolls chan string) string {
+
+// }
+
+// func keepLow(leftNum, rightNum string, dieRolls chan string) string {
+
+// }
+
+// func dropLow(leftNum, rightNum string, dieRolls chan string) string {
+
+// }
+
+// func dropHigh(leftNum, rightNum string, dieRolls chan string) string {
+
+// }
 
 func dieRoll(numDice, dieSize int) []int {
 	if numDice == 0 {
