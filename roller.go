@@ -286,6 +286,9 @@ func addDice(strRolls []string) string {
 
 func keepHigh(leftNum, rightNum string, outPut chan string) string {
 	// fmt.Println(leftNum, rightNum)
+	if len(outPut) < 1 {
+		return leftNum
+	}
 	dieRolls := make(chan string, len(outPut))
 	var result string = leftNum
 	var lastIndex int = -1
@@ -309,6 +312,9 @@ func keepHigh(leftNum, rightNum string, outPut chan string) string {
 }
 
 func keepLow(leftNum, rightNum string, outPut chan string) string {
+	if len(outPut) < 1 {
+		return leftNum
+	}
 	dieRolls := make(chan string, len(outPut))
 	var result string = leftNum
 	var lastIndex int = -1
@@ -332,6 +338,9 @@ func keepLow(leftNum, rightNum string, outPut chan string) string {
 }
 
 func dropLow(leftNum, rightNum string, outPut chan string) string {
+	if len(outPut) < 1 {
+		return "0"
+	}
 	dieRolls := make(chan string, len(outPut))
 	var result string = leftNum
 	var lastIndex int = -1
@@ -355,6 +364,9 @@ func dropLow(leftNum, rightNum string, outPut chan string) string {
 }
 
 func dropHigh(leftNum, rightNum string, outPut chan string) string {
+	if len(outPut) < 1 {
+		return "0"
+	}
 	dieRolls := make(chan string, len(outPut))
 	var result string = leftNum
 	var lastIndex int = -1
