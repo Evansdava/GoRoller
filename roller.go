@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
+	"os"
 	"regexp"
 	"sort"
 	"strconv"
@@ -16,12 +17,12 @@ func main() {
 	// fmt.Println(args)
 	// (10d6+2d8)^2+(1d20-6d4)*12/2d4
 
-	// args := os.Args[1:]
-	// // argString = "(10d6+2d8)^2+(1d20-6d4)*12/2d4"
-	// argString := strings.ToLower(strings.Join(args, ""))
-	// fmt.Println(GetRoll(argString))
+	args := os.Args[1:]
+	// argString = "(10d6+2d8)^2+(1d20-6d4)*12/2d4"
+	argString := strings.ToLower(strings.Join(args, ""))
+	fmt.Println(GetRoll(argString))
 
-	StartBot()
+	// StartBot()
 }
 
 // GetRoll parses the passed string and returns the result of the roll
@@ -309,8 +310,8 @@ func keepHigh(leftNum, rightNum string, outPut chan string) string {
 		} else {
 			dieRolls <- roll
 		}
-		close(dieRolls)
 	}
+	close(dieRolls)
 	for roll := range dieRolls {
 		outPut <- roll
 	}
@@ -335,8 +336,8 @@ func keepLow(leftNum, rightNum string, outPut chan string) string {
 		} else {
 			dieRolls <- roll
 		}
-		close(dieRolls)
 	}
+	close(dieRolls)
 	for roll := range dieRolls {
 		outPut <- roll
 	}
@@ -361,8 +362,8 @@ func dropLow(leftNum, rightNum string, outPut chan string) string {
 		} else {
 			dieRolls <- roll
 		}
-		close(dieRolls)
 	}
+	close(dieRolls)
 	for roll := range dieRolls {
 		outPut <- roll
 	}
@@ -387,8 +388,8 @@ func dropHigh(leftNum, rightNum string, outPut chan string) string {
 		} else {
 			dieRolls <- roll
 		}
-		close(dieRolls)
 	}
+	close(dieRolls)
 	for roll := range dieRolls {
 		outPut <- roll
 	}
