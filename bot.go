@@ -11,6 +11,8 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
+// Most setup code taken from https://github.com/bwmarrin/discordgo/tree/master/examples/pingpong
+
 // Variables used for command line parameters
 var (
 	Token string
