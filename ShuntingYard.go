@@ -20,6 +20,9 @@ func CreatePostfix(data []string) *Postfix {
 	prec["*"] = 2
 	prec["/"] = 2
 	prec["^"] = 3
+	prec["k"] = 4
+	prec["kh"] = 4
+	prec["dl"] = 4
 	prec["d"] = 4
 
 	// Set association for each operator
@@ -29,6 +32,9 @@ func CreatePostfix(data []string) *Postfix {
 	assoc["*"] = "l"
 	assoc["/"] = "l"
 	assoc["^"] = "r"
+	assoc["k"] = "l"
+	assoc["kh"] = "l"
+	assoc["dl"] = "l"
 	assoc["d"] = "l"
 
 	// Create stack for operators
@@ -42,9 +48,9 @@ func CreatePostfix(data []string) *Postfix {
 	for _, char := range data {
 		if strings.ContainsAny(char, "1234567890") {
 			outQueue = append(outQueue, char)
-		} else if strings.Contains("+-*/d^", char) {
+		} else if strings.Contains("+-*/dk^", string(char[0])) {
 			if len(opStack) > 0 {
-				for strings.Contains("+-*/d^", opStack[len(opStack)-1]) &&
+				for strings.Contains("+-*/dk^", string(opStack[len(opStack)-1][0])) &&
 					(prec[opStack[len(opStack)-1]] > prec[char] ||
 						(prec[opStack[len(opStack)-1]] == prec[char] &&
 							assoc[char] == "l")) &&
