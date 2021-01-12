@@ -55,3 +55,16 @@ ___
 /r (15/(2d6-3))^2  # Roll 2d6, subtract 3 from it, divide 15 by that result, and square the whole thing
 ```
 ___
+
+**Keep and Drop**
+	
+`XdY[k, kh, kl, dh, dl]Z` - Keep or drop Z values from the highest or lowest ends of a roll. When using k alone, it defaults to highest.
+
+*Examples*
+
+```
+/r 4d6k3      # Roll 4d6 and keep the highest 3 results
+/r 2d20dh1    # Roll 2d20 and drop the highest result
+/r 6d4dl3kl1  # Roll 6d4, drop the lowest three, and keep the lowest result that remains
+```
+___

@@ -121,7 +121,11 @@ func parse(argString string) []string {
 			terms = append(terms, str)
 			if i == len(argString)-1 {
 				// fmt.Println("Inserting 0 after operator")
-				terms = append(terms, "0")
+				if strings.Contains("khl", str) {
+					terms = append(terms, "1")
+				} else {
+					terms = append(terms, "0")
+				}
 			}
 		}
 	}
@@ -130,6 +134,9 @@ func parse(argString string) []string {
 	}
 	if strings.Contains("+-*/d^", terms[len(terms)-1]) {
 		terms = append(terms, "0")
+	}
+	if strings.ContainsAny("khl", terms[len(terms)-1]) {
+		terms = append(terms, "1")
 	}
 
 	terms = append(terms, ")")
@@ -142,10 +149,10 @@ func evalPostfix(postfix *Postfix, m map[string]func(string, string, chan string
 	outStack := []string{}
 	var leftNum, rightNum string
 	for len(postfix.data) > 0 {
-		fmt.Println(postfix.data)
+		// fmt.Println(postfix.data)
 		// fmt.Println(outStack)
 		token := postfix.data[0]
-		fmt.Println(token, len(outPut))
+		// fmt.Println(token, len(outPut))
 		if strings.ContainsAny(token, "1234567890") {
 			outStack = append(outStack, token)
 		} else if strings.Contains("+-*/d^k", string(token[0])) {
@@ -402,7 +409,7 @@ func keepOrDrop(rollString, kd, hl, numString string) string {
 
 	if kd == "k" && hl == "h" {
 		for i := range rollSlice {
-			fmt.Println(i, len(rollSlice), num)
+			// fmt.Println(i, len(rollSlice), num)
 			if i <= len(rollSlice)-num-1 {
 				rollSlice[i] = "~~" + rollSlice[i] + "~~"
 			} else {
@@ -431,7 +438,7 @@ func keepOrDrop(rollString, kd, hl, numString string) string {
 	} else if kd == "d" && hl == "h" {
 
 		for i := range rollSlice {
-			fmt.Println(i, len(rollSlice), num)
+			// fmt.Println(i, len(rollSlice), num)
 			if i > len(rollSlice)-num-1 {
 				rollSlice[i] = "~~" + rollSlice[i] + "~~"
 			} else {
